@@ -30,7 +30,7 @@ class GetRawData extends AsyncTask<String, Void, String> {
 
     @Override
     protected void onPostExecute(String s) {
-        Log.d(TAG, "onPostExecute: parameter = " + s);
+//        Log.d(TAG, "onPostExecute: parameter = " + s);
         if (mCallback!=null){
             mCallback.onDownloadComplete(s, mDownloadStatus);
         }
@@ -89,5 +89,13 @@ class GetRawData extends AsyncTask<String, Void, String> {
         }
 
         return null;
+    }
+
+    void runInSameThread(String s){
+        Log.d(TAG, "runInSameThread: starts");
+        if (mCallback!=null){
+            mCallback.onDownloadComplete(doInBackground(s), mDownloadStatus);
+        }
+        Log.d(TAG, "runInSameThread: ends");
     }
 }
