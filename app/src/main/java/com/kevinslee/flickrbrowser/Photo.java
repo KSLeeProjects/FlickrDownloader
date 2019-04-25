@@ -1,6 +1,9 @@
 package com.kevinslee.flickrbrowser;
+
+import java.io.Serializable;
+
 @SuppressWarnings("unused")
-class Photo {
+class Photo implements Serializable {
 
     private String mTitle;
     private String mAuthor;
@@ -8,8 +11,10 @@ class Photo {
     private String mLink;
     private String mTags;
     private String mImage;
+    private static final long serialVersionUID = 1L;
 
     public Photo(String title, String author, String authorId, String link, String tags, String image) {
+
         mTitle = title;
         mAuthor = author;
         mAuthorId = authorId;

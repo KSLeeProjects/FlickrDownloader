@@ -1,29 +1,42 @@
 package com.kevinslee.flickrbrowser;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements GetFlickrJsonData.OnDataAvailable {
+public class MainActivity extends BaseActivity implements GetFlickrJsonData.OnDataAvailable,
+                                                                                RecyclerItemClickListener.OnRecyclerClickListener {
     private static final String TAG = "MainActivity";
+    private FlickrRecyclerViewAdapter mFlickrRecyclerViewAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: Start");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        activateToolbar(false);
 
-//        GetRawData getRawData = new GetRawData(this);
-//        getRawData.execute("https://api.flickr.com/services/feeds/photos_public.gne?tags=android,nougat,sdk&tagmode=any&format=json&jsoncallback=1");
+        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        recyclerView.addOnItemTouchListener(new RecyclerItemClickListener(this, recyclerView, this));
+
+        mFlickrRecyclerViewAdapter = new FlickrRecyclerViewAdapter(new ArrayList<Photo>(), this);
+        recyclerView.setAdapter(mFlickrRecyclerViewAdapter);
 
         Log.d(TAG, "onCreate: End");
     }
@@ -32,9 +45,15 @@ public class MainActivity extends AppCompatActivity implements GetFlickrJsonData
     protected void onResume() {
         Log.d(TAG, "onResume starts ");
         super.onResume();
-        GetFlickrJsonData getFlickrJsonData = new GetFlickrJsonData(this, "https://api.flickr.com/services/feeds/photos_public.gne", "en-us", true);
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String queryResult = sharedPreferences.getString(FLICKR_QUERY, "");
+
+        if (queryResult.length() > 0){
+            GetFlickrJsonData getFlickrJsonData = new GetFlickrJsonData(this, "https://api.flickr.com/services/feeds/photos_public.gne", "en-us", true);
+            getFlickrJsonData.execute(queryResult);
+        }
 //        getFlickrJsonData.executeOnSameThread("android, nougat" );
-        getFlickrJsonData.execute("android,nougat");
         Log.d(TAG, "onResume: ends");
     }
 
@@ -58,15 +77,40 @@ public class MainActivity extends AppCompatActivity implements GetFlickrJsonData
         if (id == R.id.action_settings) {
             return true;
         }
+
+        if (id == R.id.action_search){
+            Intent intent = new Intent(this,SearchActivity.class);
+            startActivity(intent);
+            return true;
+        }
+
+
         Log.d(TAG, "onOptionsItemSelected: returned " + true);
         return super.onOptionsItemSelected(item);
     }
     @Override
     public void onDataAvailable(List<Photo> data, DownloadStatus status){
         if (status == DownloadStatus.OK){
-            Log.d(TAG, "onDownloadAvailable: data is " + data);
+            mFlickrRecyclerViewAdapter.loadNewData(data);
         } else {
             Log.e(TAG, "onDownloadAvailable: failed with status " + status );
         }
+    }
+
+    @Override
+    public void onItemClick(View view, int position) {
+        Log.d(TAG, "onItemClick: starts");
+        Toast.makeText(MainActivity.this, "Normal tap at position " + position, Toast.LENGTH_SHORT).show();
+
+    }
+    //will create new activity of photo details
+    @Override
+    public void onItemLongClick(View view, int position) {
+        Log.d(TAG, "onItemLongClick: starts");
+//        Toast.makeText(MainActivity.this, "Long tap at position " + position, Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, PhotoDetailActivity.class);
+        intent.putExtra(PHOTO_TRANSFER, mFlickrRecyclerViewAdapter.getPhoto(position));
+        startActivity(intent);
+
     }
 }

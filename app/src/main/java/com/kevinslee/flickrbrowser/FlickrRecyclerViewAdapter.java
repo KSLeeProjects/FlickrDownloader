@@ -1,7 +1,6 @@
 package com.kevinslee.flickrbrowser;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -9,6 +8,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 @SuppressWarnings({"unused", "Typo:"})
@@ -22,9 +23,23 @@ class FlickrRecyclerViewAdapter extends RecyclerView.Adapter<FlickrRecyclerViewA
     }
 
     @Override
-    public void onBindViewHolder(FlickrImageViewHolder holder, int position, List<Object> payloads) {
+    public void onBindViewHolder(FlickrImageViewHolder holder, int position) {
         //Wants new data to be stored in the view holder.
-        super.onBindViewHolder(holder, position, payloads);
+        if ((mPhotoList==null) || (mPhotoList.size()==0)){
+            holder.thumbnail.setImageResource(R.drawable.clip);
+            holder.title.setText("Cannot find any images!");
+            holder.author.setText("Try other tags and try separating words by commas for more accurate results!");
+        } else {
+            Photo photoItem = mPhotoList.get(position);
+            Log.d(TAG, "onBindViewHolder: " + photoItem.getTitle() + "-->" + position);
+            Picasso.get().load(photoItem.getImage())
+                    .error(R.drawable.placeholder1)
+                    .placeholder(R.drawable.placeholder1)
+                    .into(holder.thumbnail);
+
+            holder.title.setText(photoItem.getTitle());
+            holder.author.setText("By : " + photoItem.getAuthor());
+        }
     }
 
     @Override
@@ -38,8 +53,7 @@ class FlickrRecyclerViewAdapter extends RecyclerView.Adapter<FlickrRecyclerViewA
 
     @Override
     public int getItemCount() {
-        Log.d(TAG, "getItemCount: called");
-        return ((mPhotoList!=null)&&(mPhotoList.size()!=0) ? mPhotoList.size() : 0);
+        return ((mPhotoList!=null)&&(mPhotoList.size()!=0) ? mPhotoList.size() : 1);
     }
 
     void loadNewData(List<Photo> newPhotos){
@@ -57,12 +71,14 @@ class FlickrRecyclerViewAdapter extends RecyclerView.Adapter<FlickrRecyclerViewA
         private static final String TAG = "FlickrImageViewHolder";
         ImageView thumbnail = null;
         TextView title = null;
+        TextView author = null;
 
         public FlickrImageViewHolder(View itemView){
             super(itemView);
             Log.d(TAG, "FlickrImageViewHolder: starts");
             this.thumbnail = (ImageView) itemView.findViewById(R.id.thumbnail);
             this.title = (TextView) itemView.findViewById(R.id.title);
+            this.author = (TextView) itemView.findViewById(R.id.author);
         }
 
     }
